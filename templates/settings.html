@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Settings & Configuration{% endblock %}
+
+{% block content %}
+<div class="dashboard-grid" style="grid-template-columns: 1fr 1fr;">
+    
+    <!-- Bank Accounts -->
+    <div class="glass animate-fade-in delay-1" style="padding: 24px;">
+        <h3 style="margin-bottom: 24px;">Bank Accounts</h3>
+        
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
+            {% for bank in banks %}
+            <div style="padding: 12px 16px; border-radius: 8px; background: var(--surface); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong>{{ bank.name }}</strong>
+                    <div style="font-size: 13px; color: var(--text-muted);">{{ bank.bank_name|default:"No details" }}</div>
+                </div>
+            </div>
+            {% empty %}
+            <p style="color: var(--text-muted);">No bank accounts added.</p>
+            {% endfor %}
+        </div>
+
+        <h4 style="margin-bottom: 16px; font-size: 16px;">Add Bank Account</h4>
+        <form method="POST" action="{% url 'settings' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_bank">
+            <div style="margin-bottom: 12px;">
+                <input type="text" name="name" required placeholder="Account Name (e.g. Conta PJ Nubank)" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: rgba(15,23,42,0.5); color: white;">
+            </div>
+            <div style="margin-bottom: 16px;">
+                <input type="text" name="bank_name" placeholder="Bank Name (e.g. Nubank)" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: rgba(15,23,42,0.5); color: white;">
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Add Bank</button>
+        </form>
+    </div>
+
+    <!-- Transaction Categories -->
+    <div class="glass animate-fade-in delay-2" style="padding: 24px;">
+        <h3 style="margin-bottom: 24px;">Transaction Categories</h3>
+        
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; max-height: 250px; overflow-y: auto;">
+            {% for cat in categories %}
+            <div style="padding: 10px 16px; border-radius: 8px; background: var(--surface); display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: 500;">{{ cat.name }}</span>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    {% if cat.is_simples_revenue %}
+                        <span style="font-size: 11px; padding: 4px 8px; background: rgba(16, 185, 129, 0.2); color: var(--success); border-radius: 4px;">RBT12 Revenue</span>
+                    {% endif %}
+                    <span style="font-size: 11px; padding: 4px 8px; background: {% if cat.type == 'INCOME' %}rgba(16,185,129,0.1){% else %}rgba(239,68,68,0.1){% endif %}; color: {% if cat.type == 'INCOME' %}var(--success){% else %}var(--danger){% endif %}; border-radius: 4px;">{{ cat.get_type_display }}</span>
+                </div>
+            </div>
+            {% empty %}
+            <p style="color: var(--text-muted);">No categories added.</p>
+            {% endfor %}
+        </div>
+
+        <h4 style="margin-bottom: 16px; font-size: 16px;">Add Category</h4>
+        <form method="POST" action="{% url 'settings' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_category">
+            
+            <div style="margin-bottom: 12px;">
+                <input type="text" name="name" required placeholder="Category Name" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: rgba(15,23,42,0.5); color: white;">
+            </div>
+            
+            <div style="margin-bottom: 12px; display: flex; gap: 12px;">
+                <select name="type" required style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: rgba(15,23,42,0.5); color: white;">
+                    <option value="INCOME">Income (Receita)</option>
+                    <option value="EXPENSE">Expense (Despesa)</option>
+                </select>
+            </div>
+            
+            <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" name="is_simples_revenue" id="is_simples_revenue" style="accent-color: var(--primary); width: 16px; height: 16px;">
+                <label for="is_simples_revenue" style="font-size: 14px; color: var(--text-muted); cursor: pointer;">Counts towards Simples Nacional gross revenue (RBT12)</label>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Add Category</button>
+        </form>
+    </div>
+
+</div>
+{% endblock %}

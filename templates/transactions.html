@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Finances{% endblock %}
+
+{% block content %}
+<div class="dashboard-grid" style="grid-template-columns: 1fr 2fr;">
+    
+    <!-- Add Transaction Form -->
+    <div class="glass animate-fade-in delay-1" style="padding: 24px;">
+        <h3 style="margin-bottom: 24px;">Add New Transaction</h3>
+        
+        <form method="POST" action="{% url 'transactions' %}">
+            {% csrf_token %}
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 14px;">Description</label>
+                <input type="text" name="description" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: rgba(15,23,42,0.5); color: white;" placeholder="e.g. Website Development">
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 14px;">Amount (R$)</label>
+                <input type="number" step="0.01" name="amount" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: rgba(15,23,42,0.5); color: white;" placeholder="0.00">
+            </div>
+            
+            <div style="margin-bottom: 24px;">
+                <label style="display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 14px;">Category</label>
+                <select name="category_id" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: rgba(15,23,42,0.5); color: white;">
+                    {% for cat in categories %}
+                        <option value="{{ cat.id }}">{{ cat.name }} ({{ cat.get_type_display }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Save Transaction</button>
+        </form>
+        
+        <hr style="border: none; border-top: 1px solid var(--border); margin: 32px 0;">
+        
+        <h3 style="margin-bottom: 16px; font-size: 18px;">Import Bank Statement (OFX)</h3>
+        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 16px;">Save time by uploading your bank statement. We will automatically extract your transactions.</p>
+        
+        <form method="POST" action="{% url 'import_ofx' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 14px;">Select Bank Account</label>
+                <select name="bank_account_id" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: rgba(15,23,42,0.5); color: white;">
+                    <!-- Since we don't have banks in this context, we will populate this dynamically in the view or fallback to the main account. Actually, we should pass 'banks' to the context. -->
+                    {% for bank in banks %}
+                        <option value="{{ bank.id }}">{{ bank.name }}</option>
+                    {% empty %}
+                        <option value="">(No Bank Accounts - Create one in Settings)</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div style="margin-bottom: 24px;">
+                <input type="file" name="ofx_file" accept=".ofx" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px dashed var(--border); background: rgba(15,23,42,0.5); color: white;">
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="width: 100%; background: #38BDF8; color: #0F172A;">Upload OFX File</button>
+        </form>
+        
+    </div>
+
+    <!-- Transactions List -->
+    <div class="glass animate-fade-in delay-2" style="padding: 24px;">
+        <h3 style="margin-bottom: 24px;">Transaction History</h3>
+        
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            {% for tx in transactions %}
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; border-radius: 12px; background: var(--surface); border-left: 4px solid {% if tx.category.type == 'INCOME' %}var(--success){% else %}var(--danger){% endif %};">
+                <div>
+                    <h4 style="font-size: 16px; font-weight: 600;">{{ tx.description }}</h4>
+                    <span style="font-size: 13px; color: var(--text-muted);">{{ tx.date|date:"d M Y" }} &bull; {{ tx.category.name }}</span>
+                </div>
+                <div style="font-weight: 700; color: {% if tx.category.type == 'INCOME' %}var(--success){% else %}var(--text-main){% endif %};">
+                    {% if tx.category.type == 'INCOME' %}+{% else %}-{% endif %} R$ {{ tx.amount }}
+                </div>
+            </div>
+            {% empty %}
+            <div style="text-align: center; color: var(--text-muted); padding: 40px 0;">
+                No transactions found.
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
