@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h2>Superadmin Dashboard</h2>
+    <div style="padding: 8px 16px; background: rgba(239, 68, 68, 0.1); border: 1px solid #EF4444; color: #FCA5A5; border-radius: 8px; font-weight: bold; font-size: 14px;">
+        🛡️ High Security Area
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px;">
+    <div class="glass animate-fade-in" style="padding: 24px; display: flex; align-items: center; gap: 24px;">
+        <div style="width: 48px; height: 48px; border-radius: 24px; background: rgba(56, 189, 248, 0.1); display: flex; align-items: center; justify-content: center;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        </div>
+        <div>
+            <div style="color: var(--text-muted); font-size: 14px;">Total Users Registered</div>
+            <div style="font-size: 32px; font-weight: bold;">{{ total_users }}</div>
+        </div>
+    </div>
+
+    <div class="glass animate-fade-in delay-1" style="padding: 24px; display: flex; align-items: center; gap: 24px;">
+        <div style="width: 48px; height: 48px; border-radius: 24px; background: rgba(74, 222, 128, 0.1); display: flex; align-items: center; justify-content: center;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        </div>
+        <div>
+            <div style="color: var(--text-muted); font-size: 14px;">Total Companies Hosted</div>
+            <div style="font-size: 32px; font-weight: bold;">{{ total_companies }}</div>
+        </div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+    <!-- Companies List -->
+    <div class="glass animate-fade-in delay-2" style="padding: 24px;">
+        <h3 style="margin-bottom: 16px;">Registered Companies</h3>
+        <table style="width: 100%; text-align: left; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--text-muted);">
+                    <th style="padding: 12px 8px; font-weight: normal;">Company Name</th>
+                    <th style="padding: 12px 8px; font-weight: normal;">CNPJ</th>
+                    <th style="padding: 12px 8px; font-weight: normal;">Registered Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for comp in companies %}
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="padding: 16px 8px; font-weight: 500;">{{ comp.name }}</td>
+                    <td style="padding: 16px 8px; color: var(--text-muted);">{{ comp.cnpj }}</td>
+                    <td style="padding: 16px 8px; color: var(--text-muted);">{{ comp.created_at|date:"M d, Y" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" style="padding: 16px; text-align: center; color: var(--text-muted);">No companies registered yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Error Logs -->
+    <div class="glass animate-fade-in delay-3" style="padding: 24px;">
+        <h3 style="margin-bottom: 16px; color: #FCA5A5;">System Error Logs</h3>
+        {% for error in recent_errors %}
+        <div style="padding: 12px; background: rgba(239, 68, 68, 0.05); border-left: 3px solid #EF4444; border-radius: 4px; margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span style="font-size: 12px; font-weight: bold; color: #FCA5A5;">{{ error.status }}</span>
+                <span style="font-size: 10px; color: var(--text-muted);">{{ error.created_at|date:"H:i - M d" }}</span>
+            </div>
+            <p style="font-size: 14px; margin: 0;">{{ error.message }}</p>
+        </div>
+        {% empty %}
+        <div style="text-align: center; padding: 32px 0;">
+            <div style="width: 48px; height: 48px; border-radius: 24px; background: rgba(74, 222, 128, 0.1); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <p style="color: var(--text-muted); font-size: 14px;">No errors in the system. Everything is running smoothly!</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Data Recovery Center -->
+<div style="margin-top: 24px;">
+    <div class="glass animate-fade-in delay-4" style="padding: 24px;">
+        <h3 style="margin-bottom: 16px; color: #38BDF8;">Data Recovery Center (Soft Deletions)</h3>
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 16px;">These transactions were deleted by clients. They are hidden from their view but preserved here to prevent data loss.</p>
+        
+        <table style="width: 100%; text-align: left; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--text-muted);">
+                    <th style="padding: 12px 8px; font-weight: normal;">Company</th>
+                    <th style="padding: 12px 8px; font-weight: normal;">Description</th>
+                    <th style="padding: 12px 8px; font-weight: normal;">Amount</th>
+                    <th style="padding: 12px 8px; font-weight: normal;">Deleted At</th>
+                    <th style="padding: 12px 8px; font-weight: normal;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tx in deleted_transactions %}
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="padding: 16px 8px;">{{ tx.company.name }}</td>
+                    <td style="padding: 16px 8px; color: var(--text-muted);">{{ tx.description }}</td>
+                    <td style="padding: 16px 8px; font-weight: bold; color: {% if tx.category.type == 'INCOME' %}#4ADE80{% else %}#F87171{% endif %};">
+                        R$ {{ tx.amount }}
+                    </td>
+                    <td style="padding: 16px 8px; color: #FCA5A5;">{{ tx.deleted_at|date:"M d, H:i" }}</td>
+                    <td style="padding: 16px 8px;">
+                        <form method="POST" action="{% url 'restore_transaction' tx.id %}">
+                            {% csrf_token %}
+                            <button type="submit" style="padding: 6px 12px; background: rgba(56, 189, 248, 0.1); border: 1px solid #38BDF8; color: #38BDF8; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">
+                                Restore
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="padding: 16px; text-align: center; color: var(--text-muted);">No deleted transactions found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

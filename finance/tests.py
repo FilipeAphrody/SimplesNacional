@@ -35,3 +35,47 @@ class PricingCalculatorTests(TestCase):
             final_price=final_price
         )
         self.assertEqual(pricing.product_name, "Test Service")
+
+from datetime import date
+from .models import Transaction, BankAccount, TransactionCategory
+
+class SoftDeletionTests(TestCase):
+    def setUp(self):
+        self.company = Company.objects.create(name="Soft Delete Co", cnpj="44.444.444/0001-44")
+        self.bank = BankAccount.objects.create(company=self.company, name="Test Bank")
+        self.category = TransactionCategory.objects.create(company=self.company, name="Sales", type="INCOME")
+        self.tx = Transaction.objects.create(
+            company=self.company,
+            bank_account=self.bank,
+            category=self.category,
+            date=date.today(),
+            description="Test Sale",
+            amount=Decimal('1000.00')
+        )
+
+    def test_soft_delete_transaction(self):
+        self.assertEqual(Transaction.objects.count(), 1)
+        self.tx.delete()
+        
+        # It should disappear from default manager
+        self.assertEqual(Transaction.objects.count(), 0)
+        
+        # But still exist in all_objects manager and have is_deleted=True
+        self.assertEqual(Transaction.all_objects.count(), 1)
+        deleted_tx = Transaction.all_objects.first()
+        self.assertTrue(deleted_tx.is_deleted)
+        self.assertIsNotNone(deleted_tx.deleted_at)
+        
+    def test_restore_transaction(self):
+        self.tx.delete()
+        self.assertEqual(Transaction.objects.count(), 0)
+        
+        # Restore it
+        deleted_tx = Transaction.all_objects.first()
+        deleted_tx.restore()
+        
+        # It should reappear
+        self.assertEqual(Transaction.objects.count(), 1)
+        restored_tx = Transaction.objects.first()
+        self.assertFalse(restored_tx.is_deleted)
+        self.assertIsNone(restored_tx.deleted_at)

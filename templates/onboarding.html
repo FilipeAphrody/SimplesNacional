@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 0 auto; padding-top: 40px;">
+    <div style="text-align: center; margin-bottom: 32px;">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="2" style="margin-bottom: 16px;">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+        </svg>
+        <h2 style="font-size: 32px;">Welcome to the Platform</h2>
+        <p style="color: var(--text-muted); font-size: 16px;">Let's link your company to get started with your AI CFO.</p>
+    </div>
+
+    <div class="glass animate-fade-in" style="padding: 32px;">
+        <form method="POST" action="{% url 'onboarding' %}">
+            {% csrf_token %}
+            
+            <div style="margin-bottom: 24px;">
+                <label style="display: block; margin-bottom: 8px; color: var(--text-muted);">CNPJ</label>
+                <input type="text" name="cnpj" placeholder="00.000.000/0000-00" required class="form-control" style="width: 100%; padding: 16px; border-radius: 8px; border: 1px solid var(--border); background: rgba(15,23,42,0.5); color: white; font-size: 16px;">
+                <p style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">In the future, this will automatically fetch your company data from Receita Federal.</p>
+            </div>
+
+            <div style="margin-bottom: 32px;">
+                <label style="display: block; margin-bottom: 8px; color: var(--text-muted);">Company Name</label>
+                <input type="text" name="name" placeholder="Ex: Tech Solutions Ltda" required class="form-control" style="width: 100%; padding: 16px; border-radius: 8px; border: 1px solid var(--border); background: rgba(15,23,42,0.5); color: white; font-size: 16px;">
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 16px; border-radius: 8px; background: #38BDF8; color: #0F172A; font-weight: bold; font-size: 16px; border: none; cursor: pointer;">
+                Complete Registration
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

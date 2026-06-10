@@ -34,3 +34,16 @@ class CompanyUser(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.company.name} ({self.role})"
+
+class SystemErrorLog(models.Model):
+    STATUS_CHOICES = (
+        ('UNRESOLVED', 'Unresolved'),
+        ('RESOLVED', 'Resolved'),
+    )
+    message = models.TextField()
+    traceback = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='UNRESOLVED')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"[{self.status}] {self.message[:50]}"

@@ -1,7 +1,35 @@
 from django.db import models
+from django.utils import timezone
 from core.models import Company
 
-class BankAccount(models.Model):
+class SoftDeleteManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_deleted=False)
+
+class SoftDeleteModel(models.Model):
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    objects = SoftDeleteManager()
+    all_objects = models.Manager()
+
+    class Meta:
+        abstract = True
+
+    def delete(self, *args, **kwargs):
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.save()
+
+    def hard_delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+
+    def restore(self):
+        self.is_deleted = False
+        self.deleted_at = None
+        self.save()
+
+class BankAccount(SoftDeleteModel):
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='bank_accounts')
     name = models.CharField(max_length=100)
     bank_name = models.CharField(max_length=100, blank=True, null=True)
@@ -42,7 +70,7 @@ class TransactionCategory(models.Model):
     def __str__(self):
         return f"{self.name} ({self.get_type_display()})"
 
-class Transaction(models.Model):
+class Transaction(SoftDeleteModel):
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='transactions')
     bank_account = models.ForeignKey(BankAccount, on_delete=models.CASCADE, related_name='transactions')
     category = models.ForeignKey(TransactionCategory, on_delete=models.SET_NULL, null=True, related_name='transactions')
