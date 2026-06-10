@@ -219,6 +219,61 @@ def update_company_health(company):
         }
     )
     
+    
     insight_text = generate_ai_insight(metrics, risk_score, tax_alert)
     
     return health_record, insight_text
+
+def optimize_fator_r(rbt12, current_payroll_11m):
+    """
+    Calculates the exact amount of Pró-labore needed this month to hit exactly 28.01% Fator R.
+    Fator R = (Payroll 12m) / RBT12.
+    We need: (current_payroll_11m + this_month_pro_labore) / RBT12 = 0.2801
+    """
+    if rbt12 <= 0:
+        return Decimal('0.00')
+        
+    target_payroll_12m = rbt12 * Decimal('0.2801')
+    required_this_month = target_payroll_12m - current_payroll_11m
+    
+    if required_this_month <= 0:
+        return Decimal('0.00') # Already hitting the target
+        
+    return required_this_month
+
+def simulate_reforma_tributaria(b2b_percentage):
+    """
+    Simulates the EC 132/2023 dilemma for Simples Nacional in 2026.
+    If a company sells mostly to other businesses (B2B), they must collect IBS/CBS separately (Option B) 
+    so their clients get full tax credits.
+    If they sell mostly to consumers (B2C), they should stay unified (Option A).
+    """
+    if b2b_percentage >= 60:
+        return {
+            "recommendation": "Option B (Segregated Collection)",
+            "reasoning": f"Since {b2b_percentage}% of your sales are B2B, your corporate clients will demand full IBS/CBS tax credits. Staying unified would make you uncompetitive. You should collect IBS/CBS outside the DAS.",
+            "color": "text-yellow-400"
+        }
+    else:
+        return {
+            "recommendation": "Option A (Unified Collection)",
+            "reasoning": f"Since only {b2b_percentage}% of your sales are B2B, you don't need to generate massive tax credits for your clients. Stay unified inside the Simples Nacional DAS to avoid bureaucracy.",
+            "color": "text-green-400"
+        }
+
+def analyze_sup_eligibility(is_professional, number_of_partners, current_annual_tax):
+    """
+    Sociedade Uniprofissional (SUP) scanner.
+    If they are eligible professionals, they can pay a fixed ISS instead of variable.
+    """
+    if not is_professional:
+        return {"eligible": False, "savings": Decimal('0.00'), "message": "Only regulated professions (Doctors, Lawyers, etc.) are eligible."}
+        
+    # Mock fixed ISS rate per partner: R$ 2000 / year
+    fixed_iss_total = Decimal('2000.00') * Decimal(str(number_of_partners))
+    
+    if fixed_iss_total < current_annual_tax:
+        savings = current_annual_tax - fixed_iss_total
+        return {"eligible": True, "savings": savings, "message": f"Switching to SUP could save you R$ {savings:,.2f} per year by fixing your ISS."}
+    else:
+        return {"eligible": False, "savings": Decimal('0.00'), "message": "Your current variable tax is cheaper than the fixed SUP fee."}

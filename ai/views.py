@@ -1,6 +1,9 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from .services import update_company_health
+from decimal import Decimal
+from .models import CompanyHealthMetrics
+from .services import update_company_health, optimize_fator_r, simulate_reforma_tributaria, analyze_sup_eligibility
+from accounting.services import calculate_rbt12
 
 @login_required
 def ai_dashboard_view(request):
@@ -16,10 +19,49 @@ def ai_dashboard_view(request):
         'company': company,
         'metrics': health_record,
         'insight_text': insight_text,
-        'is_critical': health_record.bankruptcy_risk_score > 60
+        'is_critical': health_record.bankruptcy_risk_score > 60,
+        'insight': health_record.tax_optimization_alert if health_record else "Not enough data for insights."
     }
     
     return render(request, 'ai_dashboard.html', context)
+
+@login_required
+def tax_engineering_view(request):
+    company_user = request.user.companies.first()
+    if not company_user:
+        return redirect('dashboard')
+    company = company_user.company
+    
+    # Defaults
+    rbt12 = Decimal('100000.00') # Mock RBT12
+    current_payroll_11m = Decimal('20000.00') # Mock current payroll
+    current_annual_tax = Decimal('6000.00')
+    
+    # 1. Fator R Optimization
+    required_pro_labore = optimize_fator_r(rbt12, current_payroll_11m)
+    current_fator_r = (current_payroll_11m / rbt12) * 100 if rbt12 > 0 else 0
+    
+    # 2. Reforma Tributaria (default B2B = 30%)
+    b2b_percentage = 30
+    if request.method == 'POST' and 'b2b_percentage' in request.POST:
+        b2b_percentage = int(request.POST.get('b2b_percentage', 30))
+        
+    reform_result = simulate_reforma_tributaria(b2b_percentage)
+    
+    # 3. SUP Scanner
+    sup_result = analyze_sup_eligibility(True, 2, current_annual_tax)
+    
+    context = {
+        'company': company,
+        'rbt12': rbt12,
+        'current_fator_r': current_fator_r,
+        'required_pro_labore': required_pro_labore,
+        'b2b_percentage': b2b_percentage,
+        'reform_result': reform_result,
+        'sup_result': sup_result
+    }
+    
+    return render(request, 'tax_engineering.html', context)
 
 @login_required
 def ai_chat_api(request):

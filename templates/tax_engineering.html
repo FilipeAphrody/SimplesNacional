@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h2>AI Tax Strategy & Engineering</h2>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+
+    <!-- 1. Fator R Optimizer -->
+    <div class="glass animate-fade-in delay-1" style="padding: 24px; position: relative; overflow: hidden;">
+        <h3 style="margin-bottom: 8px;">Fator R Optimizer</h3>
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 24px;">
+            For service companies in Anexo V. Hit 28% payroll to drop to Anexo III (saving up to 60% on DAS taxes).
+        </p>
+
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; background: rgba(15,23,42,0.5); border-radius: 12px; margin-bottom: 16px;">
+            <div style="font-size: 48px; font-weight: 800; color: {% if current_fator_r >= 28 %}#4ADE80{% else %}#F87171{% endif %};">
+                {{ current_fator_r|floatformat:1 }}%
+            </div>
+            <div style="color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Current Fator R Ratio</div>
+        </div>
+
+        {% if required_pro_labore > 0 %}
+            <div style="padding: 16px; background: rgba(239, 68, 68, 0.1); border-left: 4px solid #EF4444; border-radius: 4px;">
+                <h4 style="color: #FCA5A5; margin-bottom: 8px;">Action Required</h4>
+                <p style="font-size: 14px;">You must declare a *Pró-labore* of exactly <strong style="color: white;">R$ {{ required_pro_labore|floatformat:2 }}</strong> this month to hit the 28.01% legal threshold and unlock Anexo III.</p>
+            </div>
+        {% else %}
+            <div style="padding: 16px; background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22C55E; border-radius: 4px;">
+                <h4 style="color: #86EFAC; margin-bottom: 8px;">Optimal Zone</h4>
+                <p style="font-size: 14px;">Your payroll ratio is highly optimized. You are successfully unlocking Anexo III.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- 2. Reforma Tributaria Simulator -->
+    <div class="glass animate-fade-in delay-2" style="padding: 24px;">
+        <h3 style="margin-bottom: 8px;">2026 Tax Reform Simulator</h3>
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 24px;">
+            Simulate the EC 132/2023 Dilemma: Stay Unified or Collect IBS/CBS separately for B2B tax credits?
+        </p>
+
+        <form method="POST" style="margin-bottom: 24px;">
+            {% csrf_token %}
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 8px; color: var(--text-muted);">Percentage of Sales to other Businesses (B2B): <span style="color: white; font-weight: bold;">{{ b2b_percentage }}%</span></label>
+                <input type="range" name="b2b_percentage" min="0" max="100" value="{{ b2b_percentage }}" onchange="this.form.submit()" style="width: 100%; cursor: pointer;">
+                <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+                    <span>0% (Full B2C)</span>
+                    <span>100% (Full B2B)</span>
+                </div>
+            </div>
+        </form>
+
+        <div style="padding: 16px; background: rgba(15,23,42,0.5); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px;">AI Recommendation</div>
+            <div class="{{ reform_result.color }}" style="font-size: 20px; font-weight: bold; margin-bottom: 12px;">{{ reform_result.recommendation }}</div>
+            <p style="font-size: 14px; line-height: 1.5;">{{ reform_result.reasoning }}</p>
+        </div>
+    </div>
+
+    <!-- 3. SUP Scanner -->
+    <div class="glass animate-fade-in delay-3" style="padding: 24px; grid-column: 1 / -1;">
+        <h3 style="margin-bottom: 8px;">Sociedade Uniprofissional (SUP) Scanner</h3>
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 24px;">
+            Analysis for doctors, lawyers, and engineers paying variable ISS.
+        </p>
+        
+        <div style="display: flex; align-items: center; gap: 24px; padding: 24px; background: rgba(15,23,42,0.5); border-radius: 12px;">
+            <div style="flex: 1;">
+                {% if sup_result.eligible %}
+                    <div style="color: #4ADE80; font-size: 24px; font-weight: bold; margin-bottom: 8px;">Eligible for SUP</div>
+                    <p style="font-size: 16px;">{{ sup_result.message }}</p>
+                {% else %}
+                    <div style="color: var(--text-muted); font-size: 24px; font-weight: bold; margin-bottom: 8px;">Not Recommended</div>
+                    <p style="font-size: 16px;">{{ sup_result.message }}</p>
+                {% endif %}
+            </div>
+            
+            {% if sup_result.eligible %}
+            <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid #4ADE80; padding: 16px; border-radius: 12px; text-align: center;">
+                <div style="font-size: 12px; color: #86EFAC; text-transform: uppercase;">Projected Annual Savings</div>
+                <div style="font-size: 32px; font-weight: 900; color: #4ADE80;">R$ {{ sup_result.savings|floatformat:2 }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}
