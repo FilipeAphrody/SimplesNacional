@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h2>Smart Pricing Calculator</h2>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+    <!-- Calculator Form -->
+    <div class="glass animate-fade-in delay-1" style="padding: 24px;">
+        <h3 style="margin-bottom: 16px;">Calculate Profitable Price</h3>
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 24px;">
+            Input your base costs and desired margin. We will automatically factor in your current 
+            <strong>Simples Nacional effective rate ({{ current_tax_rate|floatformat:2 }}%)</strong> 
+            to guarantee profitability.
+        </p>
+
+        {% if error %}
+            <div style="background: rgba(239, 68, 68, 0.2); color: #FCA5A5; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        {% if success %}
+            <div style="background: rgba(34, 197, 94, 0.2); color: #86EFAC; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+                {{ success }}
+            </div>
+        {% endif %}
+
+        <form method="POST" action="{% url 'pricing_calculator' %}">
+            {% csrf_token %}
+            
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 8px; color: var(--text-muted);">Product/Service Name</label>
+                <input type="text" name="product_name" required class="form-control" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: rgba(15,23,42,0.5); color: white;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 8px; color: var(--text-muted);">Base Cost (R$)</label>
+                <input type="number" step="0.01" name="base_cost" required class="form-control" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: rgba(15,23,42,0.5); color: white;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 8px; color: var(--text-muted);">Payment Gateway Fee (%)</label>
+                <input type="number" step="0.01" name="gateway_fee_percent" value="5.00" required class="form-control" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: rgba(15,23,42,0.5); color: white;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label style="display: block; margin-bottom: 8px; color: var(--text-muted);">Desired Profit Margin (%)</label>
+                <input type="number" step="0.01" name="desired_margin_percent" value="20.00" required class="form-control" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: rgba(15,23,42,0.5); color: white;">
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; border-radius: 8px; background: #38BDF8; color: #0F172A; font-weight: 600; border: none; cursor: pointer;">
+                Calculate Final Price
+            </button>
+        </form>
+    </div>
+
+    <!-- Past Simulations -->
+    <div class="glass animate-fade-in delay-2" style="padding: 24px;">
+        <h3 style="margin-bottom: 16px;">Pricing Simulations</h3>
+        
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+            {% for sim in simulations %}
+            <div style="background: rgba(15,23,42,0.5); border: 1px solid var(--border); border-radius: 8px; padding: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <div style="font-weight: 600; font-size: 16px;">{{ sim.product_name }}</div>
+                    <div style="color: #38BDF8; font-size: 20px; font-weight: 700;">R$ {{ sim.final_price|floatformat:2 }}</div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; font-size: 12px; color: var(--text-muted);">
+                    <div>
+                        <div>Base Cost</div>
+                        <div style="color: white;">R$ {{ sim.base_cost|floatformat:2 }}</div>
+                    </div>
+                    <div>
+                        <div>Taxes (SN)</div>
+                        <div style="color: white;">{{ sim.simples_nacional_rate|floatformat:2 }}%</div>
+                    </div>
+                    <div>
+                        <div>Fees</div>
+                        <div style="color: white;">{{ sim.gateway_fee_percent|floatformat:2 }}%</div>
+                    </div>
+                    <div>
+                        <div>Margin</div>
+                        <div style="color: #4ADE80;">{{ sim.desired_margin_percent|floatformat:2 }}%</div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div style="text-align: center; color: var(--text-muted); padding: 40px 0;">
+                No simulations run yet.
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

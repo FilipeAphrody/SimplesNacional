@@ -1,7 +1,10 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from finance.models import Transaction, TransactionCategory, BankAccount
-from datetime import date
+from finance.models import Transaction, TransactionCategory, BankAccount, ProductPricing
+from core.models import Company
+from datetime import date, datetime
+from decimal import Decimal
+from accounting.services import calculate_monthly_das
 
 @login_required
 def transactions_view(request):
@@ -145,3 +148,55 @@ def import_ofx_view(request):
             print(f"Error parsing OFX: {e}")
             
     return redirect('transactions')
+
+@login_required
+def pricing_calculator_view(request):
+    """
+    Smart Pricing Calculator that factors in Simples Nacional tax rates.
+    Price = Cost / (1 - (Tax% + Fee% + Margin%))
+    """
+    company_user = request.user.companies.first()
+    if not company_user:
+        return redirect('dashboard')
+    company = company_user.company
+        
+    current_month = datetime.today().month
+    current_year = datetime.today().year
+    
+    # Get current tax rate (mock a small revenue to get the exact bracket aliquota)
+    test_revenue = Decimal('100.00')
+    tax_calc = calculate_monthly_das(company, current_month, current_year, test_revenue)
+    current_tax_rate = tax_calc.aliquota_efetiva * 100
+    
+    context = {
+        'current_tax_rate': current_tax_rate,
+        'simulations': ProductPricing.objects.filter(company=company).order_by('-created_at')
+    }
+    
+    if request.method == 'POST':
+        product_name = request.POST.get('product_name')
+        base_cost = Decimal(request.POST.get('base_cost', '0'))
+        gateway_fee_percent = Decimal(request.POST.get('gateway_fee_percent', '0'))
+        desired_margin_percent = Decimal(request.POST.get('desired_margin_percent', '0'))
+        
+        # Calculate Final Price
+        total_deductions_percent = (current_tax_rate + gateway_fee_percent + desired_margin_percent) / Decimal('100')
+        
+        if total_deductions_percent >= 1:
+            context['error'] = "Total deductions (Tax + Fees + Margin) cannot exceed 100%!"
+        else:
+            final_price = base_cost / (Decimal('1') - total_deductions_percent)
+            
+            ProductPricing.objects.create(
+                company=company,
+                product_name=product_name,
+                base_cost=base_cost,
+                gateway_fee_percent=gateway_fee_percent,
+                desired_margin_percent=desired_margin_percent,
+                simples_nacional_rate=current_tax_rate,
+                final_price=final_price
+            )
+            context['simulations'] = ProductPricing.objects.filter(company=company).order_by('-created_at')
+            context['success'] = f"Simulation saved! Recommended Price for {product_name}: R$ {final_price:.2f}"
+            
+    return render(request, 'pricing_calculator.html', context)

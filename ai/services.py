@@ -4,12 +4,13 @@ import pandas as pd
 import numpy as np
 import networkx as nx
 from datetime import datetime, timedelta
+from decimal import Decimal
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from django.conf import settings
 from .models import CompanyHealthMetrics
 from finance.models import Transaction, BankAccount
-from accounting.services import get_rbt12, calculate_das
+from accounting.services import calculate_rbt12, calculate_monthly_das
 
 MODEL_PATH = os.path.join(settings.BASE_DIR, 'ai', 'bankruptcy_model.pkl')
 
@@ -133,7 +134,7 @@ def predict_bankruptcy_risk(metrics_dict):
         train_synthetic_model()
         
     with open(MODEL_PATH, 'rb') as f:
-        clf = pickle.load(f)
+        clf = pickle.load(f)  # nosec B301
         
     X_input = np.array([[
         metrics_dict['account_mixing_score'],
@@ -152,21 +153,24 @@ def scan_tax_optimization(company):
     We will use 14.5% as a benchmark.
     """
     try:
-        rbt12 = get_rbt12(company, datetime.today().date())
-        # Mocking an Faturamento for the month to get the effective rate
-        test_revenue = 10000.00
-        tax_results = calculate_das(company, datetime.today().date(), test_revenue)
+        current_month = datetime.today().month
+        current_year = datetime.today().year
         
-        effective_rate = tax_results['effective_rate'] * 100
+        rbt12 = calculate_rbt12(company, current_month, current_year)
+        # Mocking an Faturamento for the month to get the effective rate
+        test_revenue = Decimal('10000.00')
+        tax_results = calculate_monthly_das(company, current_month, current_year, test_revenue)
+        
+        effective_rate = tax_results.aliquota_efetiva * 100
         lucro_presumido_benchmark = 14.5
         
-        if effective_rate > lucro_presumido_benchmark:
-            savings_pct = effective_rate - lucro_presumido_benchmark
-            annual_savings = (rbt12 * (savings_pct / 100))
+        if float(effective_rate) > lucro_presumido_benchmark:
+            savings_pct = float(effective_rate) - lucro_presumido_benchmark
+            annual_savings = (float(rbt12) * (savings_pct / 100))
             return f"🚨 TAX ALERT: Your effective Simples Nacional rate is {effective_rate:.2f}%. A switch to Lucro Presumido (approx {lucro_presumido_benchmark}%) could save you ~R$ {annual_savings:,.2f} annually."
         return "Your current Simples Nacional tax regime is mathematically optimal."
     except Exception as e:
-        return "Not enough data to calculate tax optimization."
+        return f"Not enough data to calculate tax optimization: {e}"
 
 def generate_ai_insight(metrics_dict, risk_score, tax_alert):
     """

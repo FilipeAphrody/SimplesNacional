@@ -13,6 +13,19 @@ class BankAccount(models.Model):
     def __str__(self):
         return f"{self.name} - {self.company.name}"
 
+class ProductPricing(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    product_name = models.CharField(max_length=255)
+    base_cost = models.DecimalField(max_digits=12, decimal_places=2)
+    gateway_fee_percent = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
+    desired_margin_percent = models.DecimalField(max_digits=5, decimal_places=2, default=20.00)
+    simples_nacional_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
+    final_price = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.product_name
+
 class TransactionCategory(models.Model):
     TYPE_CHOICES = (
         ('INCOME', 'Income'),
