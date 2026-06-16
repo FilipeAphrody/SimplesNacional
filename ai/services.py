@@ -128,14 +128,19 @@ def train_synthetic_model():
         
     return "Model trained and saved."
 
+_cached_clf = None
+
 def predict_bankruptcy_risk(metrics_dict):
     """ Loads the ML model and predicts bankruptcy probability based on extracted graph metrics. """
+    global _cached_clf
+    
     if not os.path.exists(MODEL_PATH):
         train_synthetic_model()
         
-    with open(MODEL_PATH, 'rb') as f:
-        clf = pickle.load(f)  # nosec B301
-        
+    if _cached_clf is None:
+        with open(MODEL_PATH, 'rb') as f:
+            _cached_clf = pickle.load(f)  # nosec B301
+            
     X_input = np.array([[
         metrics_dict['account_mixing_score'],
         metrics_dict['cash_flow_volatility'],
@@ -143,7 +148,7 @@ def predict_bankruptcy_risk(metrics_dict):
     ]])
     
     # Get probability of class 1 (Bankruptcy)
-    prob = clf.predict_proba(X_input)[0][1]
+    prob = _cached_clf.predict_proba(X_input)[0][1]
     return round(prob * 100, 2)
 
 def scan_tax_optimization(company):
