@@ -1,6 +1,8 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
 from decimal import Decimal
+from ratelimit.decorators import ratelimit
 from .models import CompanyHealthMetrics
 from .services import update_company_health, optimize_fator_r, simulate_reforma_tributaria, analyze_sup_eligibility
 from accounting.services import calculate_rbt12
@@ -63,7 +65,10 @@ def tax_engineering_view(request):
     
     return render(request, 'tax_engineering.html', context)
 
+@csrf_exempt
 @login_required
+@ratelimit(key='user', rate='10/m', block=True)
+@ratelimit(key='ip', rate='20/m', block=True)
 def ai_chat_api(request):
     """
     Mocked LLM Chat endpoint with Rate Limiting and Prompt Injection Defense.
