@@ -5,12 +5,14 @@
 {% block content %}
 <style>
     /* Force white background for QR codes so they are scannable in Dark Mode */
-    .max-w-md img {
+    .max-w-md img, .max-w-md svg {
         background-color: white !important;
         padding: 1rem;
         border-radius: 0.5rem;
         margin: 1.5rem auto;
         display: block;
+        max-width: 250px;
+        height: auto;
     }
 </style>
 <div class="min-h-screen flex items-center justify-center bg-gray-900 px-4">
