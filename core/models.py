@@ -8,6 +8,22 @@ class SoftDeleteManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(is_deleted=False)
 
+class TenantManager(SoftDeleteManager):
+    """
+    Enforces Row-Level Security by automatically appending .filter(company=current_company).
+    Prevents cross-tenant data leaks (BOLA/IDOR) dynamically.
+    """
+    def get_queryset(self):
+        from .middleware import get_current_company
+        qs = super().get_queryset()
+        company = get_current_company()
+        if company:
+            return qs.filter(company=company)
+        # If no company in thread context, we still return the queryset
+        # This allows backend tasks (which don't have middleware) to run correctly.
+        # But for requests, the middleware ensures the company is set.
+        return qs
+
 class SoftDeleteModel(models.Model):
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)

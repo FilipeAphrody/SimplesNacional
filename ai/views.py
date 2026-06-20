@@ -111,11 +111,22 @@ def ai_chat_api(request):
                     'reply': "I'm sorry, but I cannot process that request as it violates my security protocols."
                 }, status=403)
         
-        # --- 3. Process Valid Request ---
+        # --- 3. Process Valid Request & Handle Memory ---
         
         # Increment Quota
         profile.ai_request_count += 1
         profile.save(update_fields=['ai_request_count'])
+        
+        # AI Memory Context Isolation
+        # Ensure memory is explicitly tied to the current company ID
+        current_company_id = str(company.id)
+        if 'ai_memory' not in request.session or request.session.get('ai_memory_company_id') != current_company_id:
+            request.session['ai_memory'] = []
+            request.session['ai_memory_company_id'] = current_company_id
+            
+        # Append user message
+        memory = request.session['ai_memory']
+        memory.append({'role': 'user', 'content': user_message})
         
         # Simple mocked intent matching for demonstration
         if 'runway' in user_message or 'cash' in user_message:
@@ -125,7 +136,17 @@ def ai_chat_api(request):
         elif 'margin' in user_message or 'profit' in user_message:
             reply = "Your profit margin dropped slightly this month due to an increase in 'Software Subscriptions'. I recommend auditing your SaaS licenses."
         else:
-            reply = "That's a great question. As your AI CFO, I am analyzing your graph data to give you the best strategic advice. (This is a mock response — integrate an OpenAI/Gemini API key here to enable dynamic chat!)"
+            reply = "That's a great question. As your AI CFO, I am analyzing your graph data to give you the best strategic advice."
+            
+        # Append AI response
+        memory.append({'role': 'ai', 'content': reply})
+        
+        # Constrain Context Window (Max 5 turns = 10 messages)
+        if len(memory) > 10:
+            memory = memory[-10:]
+            
+        request.session['ai_memory'] = memory
+        request.session.modified = True
             
         return JsonResponse({'reply': reply})
         

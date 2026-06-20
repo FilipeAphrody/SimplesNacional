@@ -1,5 +1,5 @@
 from django.db import models
-from core.models import Company, SoftDeleteModel
+from core.models import Company, SoftDeleteModel, TenantManager
 from core.fields import EncryptedCharField
 
 class BankAccount(SoftDeleteModel):
@@ -10,6 +10,8 @@ class BankAccount(SoftDeleteModel):
     account_number = EncryptedCharField(max_length=50, blank=True, null=True)
     initial_balance = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     current_balance = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
+
+    objects = TenantManager()
 
     @property
     def masked_agency(self):
@@ -56,6 +58,8 @@ class TransactionCategory(SoftDeleteModel):
     # Simples Nacional specific mapping
     is_simples_revenue = models.BooleanField(default=False, help_text="Does this count towards Simples Nacional gross revenue (RBT12)?")
 
+    objects = TenantManager()
+
     def __str__(self):
         return f"{self.name} ({self.get_type_display()})"
 
@@ -74,6 +78,8 @@ class Transaction(SoftDeleteModel):
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    objects = TenantManager()
 
     def __str__(self):
         return f"{self.date} - {self.description}: {self.amount}"
