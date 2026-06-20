@@ -17,8 +17,9 @@ class OnboardingTests(TestCase):
             'name': 'Test Company LLC'
         })
         self.assertEqual(response.status_code, 302) # Redirects to dashboard
-        self.assertTrue(Company.objects.filter(cnpj='12.345.678/0001-99').exists())
-        self.assertEqual(self.user.companies.count(), 1)
+        self.assertTrue(self.user.companies.exists())
+        company = self.user.companies.first().company
+        self.assertEqual(company.cnpj, '12.345.678/0001-99')
         self.assertEqual(self.user.companies.first().role, 'OWNER')
 
 class SuperadminTests(TestCase):
