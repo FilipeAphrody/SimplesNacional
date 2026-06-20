@@ -64,6 +64,11 @@ INSTALLED_APPS = [
     'finance',
     'accounting',
     'ai',
+    
+    # Security / 2FA
+    'django_otp',
+    'django_otp.plugins.otp_totp',
+    'two_factor',
 ]
 
 MIDDLEWARE = [
@@ -75,7 +80,17 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'core.middleware.TenantMiddleware',
+    'core.middleware.AdminAccessMiddleware', # IP Allowlisting for Admin
+    'django_otp.middleware.OTPMiddleware',   # 2FA Enforcement
 ]
+
+# Admin Stealth Configuration
+ADMIN_URL = config('ADMIN_URL', default='stealth-admin/')
+ALLOWED_ADMIN_IPS = config('ALLOWED_ADMIN_IPS', default='127.0.0.1').split(',')
+
+# 2FA Settings
+LOGIN_URL = 'two_factor:login'
+LOGIN_REDIRECT_URL = '/'
 
 ROOT_URLCONF = 'saas_project.urls'
 

@@ -1,9 +1,19 @@
 from django.contrib import admin
 from django.urls import path, include
 from core import views as core_views
+from django.conf import settings
+from two_factor.urls import urlpatterns as tf_urls
+
+# Enforce 2FA strictly on the Django Admin site
+from django_otp.admin import OTPAdminSite
+admin.site.__class__ = OTPAdminSite
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    # Core 2FA Routes
+    path('', include(tf_urls)),
+    
+    # Stealth Admin URL (Security through Obscurity)
+    path(settings.ADMIN_URL, admin.site.urls),
     path('superadmin/', core_views.superadmin_dashboard_view, name='superadmin'),
     path('superadmin/restore-transaction/<int:tx_id>/', core_views.restore_transaction_view, name='restore_transaction'),
     path('superadmin/restore-company/<int:company_id>/', core_views.restore_company_view, name='restore_company'),
