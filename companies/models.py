@@ -24,6 +24,10 @@ class CompanyProfile(models.Model):
     zip_code = models.CharField(max_length=10, blank=True, null=True)
     primary_cnae = models.ForeignKey(CNAE, on_delete=models.SET_NULL, null=True, related_name='primary_companies')
     secondary_cnaes = models.ManyToManyField(CNAE, blank=True, related_name='secondary_companies')
+    
+    # AI Subscription Quota Tracking
+    ai_request_count = models.IntegerField(default=0, help_text="Number of AI requests made this billing cycle")
+    ai_request_quota = models.IntegerField(default=10, help_text="Maximum allowed AI requests per billing cycle (based on plan)")
 
     def __str__(self):
         return f"Profile of {self.company.name}"

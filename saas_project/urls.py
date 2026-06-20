@@ -5,7 +5,11 @@ from core import views as core_views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('superadmin/', core_views.superadmin_dashboard_view, name='superadmin'),
-    path('superadmin/restore/<int:tx_id>/', core_views.restore_transaction_view, name='restore_transaction'),
+    path('superadmin/restore-transaction/<int:tx_id>/', core_views.restore_transaction_view, name='restore_transaction'),
+    path('superadmin/restore-company/<int:company_id>/', core_views.restore_company_view, name='restore_company'),
+    path('superadmin/restore-category/<int:cat_id>/', core_views.restore_category_view, name='restore_category'),
+
+    path('superadmin/export-ai-dataset/', core_views.export_ai_dataset_view, name='export_ai_dataset'),
     path('onboarding/', core_views.onboarding_view, name='onboarding'),
     path('accounts/', include('django.contrib.auth.urls')),
     path('transactions/', include('finance.urls')),

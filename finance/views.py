@@ -26,9 +26,13 @@ def transactions_view(request):
             name='Main Account'
         )
         
-        category = TransactionCategory.objects.filter(id=category_id, company=company).first()
+        category = TransactionCategory.objects.filter(id=category_id, company=company).first() if category_id else None
         
-        if description and amount and category:
+        if description and amount:
+            if not category:
+                from ai.services import auto_categorize_transaction
+                category = auto_categorize_transaction(description, company)
+                
             Transaction.objects.create(
                 company=company,
                 bank_account=bank_account,
@@ -70,8 +74,16 @@ def settings_view(request):
         if action == 'add_bank':
             name = request.POST.get('name')
             bank_name = request.POST.get('bank_name')
+            agency = request.POST.get('agency')
+            account_number = request.POST.get('account_number')
             if name:
-                BankAccount.objects.create(company=company, name=name, bank_name=bank_name)
+                BankAccount.objects.create(
+                    company=company, 
+                    name=name, 
+                    bank_name=bank_name,
+                    agency=agency,
+                    account_number=account_number
+                )
                 
         elif action == 'add_category':
             name = request.POST.get('name')
@@ -113,16 +125,8 @@ def import_ofx_view(request):
         except BankAccount.DoesNotExist:
             return redirect('transactions')
 
-        # Create or get default uncategorized categories
-        uncategorized_income, _ = TransactionCategory.objects.get_or_create(
-            company=company, name='Uncategorized Income', type='INCOME', 
-            defaults={'is_simples_revenue': False}
-        )
-        uncategorized_expense, _ = TransactionCategory.objects.get_or_create(
-            company=company, name='Uncategorized Expense', type='EXPENSE', 
-            defaults={'is_simples_revenue': False}
-        )
-
+        from ai.services import auto_categorize_transaction
+        
         try:
             ofx = OfxParser.parse(ofx_file)
             for account in ofx.accounts:
@@ -132,14 +136,16 @@ def import_ofx_view(request):
                         continue
                         
                     amount = Decimal(str(tx.amount))
-                    category = uncategorized_income if amount > 0 else uncategorized_expense
+                    description = tx.memo or tx.payee or 'Imported OFX Transaction'
+                    
+                    category = auto_categorize_transaction(description, company)
                     
                     Transaction.objects.create(
                         company=company,
                         bank_account=bank_account,
                         category=category,
                         date=tx.date.date() if hasattr(tx.date, 'date') else tx.date,
-                        description=tx.memo or tx.payee or 'Imported OFX Transaction',
+                        description=description,
                         amount=abs(amount),
                         fitid=tx.id
                     )

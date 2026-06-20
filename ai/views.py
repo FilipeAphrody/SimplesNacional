@@ -66,14 +66,56 @@ def tax_engineering_view(request):
 @login_required
 def ai_chat_api(request):
     """
-    Mocked LLM Chat endpoint.
+    Mocked LLM Chat endpoint with Rate Limiting and Prompt Injection Defense.
     """
     import json
+    import re
     from django.http import JsonResponse
     
+    company_user = request.user.companies.first()
+    if not company_user:
+        return JsonResponse({'error': 'No company profile found.'}, status=403)
+        
+    company = company_user.company
+    profile = getattr(company, 'profile', None)
+    
+    if not profile:
+        return JsonResponse({'error': 'Company profile missing.'}, status=403)
+    
     if request.method == 'POST':
+        # --- 1. Rate Limiting (AI Quota Check) ---
+        if profile.ai_request_count >= profile.ai_request_quota:
+            return JsonResponse({
+                'error': 'Quota Exceeded',
+                'reply': f"You have reached your AI quota of {profile.ai_request_quota} requests for this billing cycle. Please upgrade your plan."
+            }, status=429)
+            
         data = json.loads(request.body)
         user_message = data.get('message', '').lower()
+        
+        # --- 2. Prompt Injection Defense (Sanitization) ---
+        malicious_patterns = [
+            r'ignore (all )?previous instructions',
+            r'system prompt',
+            r'forget everything',
+            r'you are now',
+            r'bypass',
+            r'developer mode'
+        ]
+        
+        for pattern in malicious_patterns:
+            if re.search(pattern, user_message, re.IGNORECASE):
+                # We do not decrement the quota for attacks, just block.
+                return JsonResponse({
+                    'error': 'Security Alert',
+                    'reply': "I'm sorry, but I cannot process that request as it violates my security protocols."
+                }, status=403)
+        
+        # --- 3. Process Valid Request ---
+        
+        # Increment Quota
+        profile.ai_request_count += 1
+        profile.save(update_fields=['ai_request_count'])
         
         # Simple mocked intent matching for demonstration
         if 'runway' in user_message or 'cash' in user_message:

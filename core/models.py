@@ -1,17 +1,46 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
+from .fields import EncryptedCharField
+
+class SoftDeleteManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_deleted=False)
+
+class SoftDeleteModel(models.Model):
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    objects = SoftDeleteManager()
+    all_objects = models.Manager()
+
+    class Meta:
+        abstract = True
+
+    def delete(self, *args, **kwargs):
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.save()
+
+    def hard_delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+
+    def restore(self):
+        self.is_deleted = False
+        self.deleted_at = None
+        self.save()
 
 class User(AbstractUser):
     # Additional fields can be added here
-    phone_number = models.CharField(max_length=20, blank=True, null=True)
+    phone_number = EncryptedCharField(max_length=20, blank=True, null=True)
 
     def __str__(self):
         return self.username
 
-class Company(models.Model):
+class Company(SoftDeleteModel):
     name = models.CharField(max_length=255)
-    cnpj = models.CharField(max_length=14, unique=True)
+    cnpj = EncryptedCharField(max_length=14, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

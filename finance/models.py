@@ -1,47 +1,36 @@
 from django.db import models
-from django.utils import timezone
-from core.models import Company
-
-class SoftDeleteManager(models.Manager):
-    def get_queryset(self):
-        return super().get_queryset().filter(is_deleted=False)
-
-class SoftDeleteModel(models.Model):
-    is_deleted = models.BooleanField(default=False)
-    deleted_at = models.DateTimeField(null=True, blank=True)
-
-    objects = SoftDeleteManager()
-    all_objects = models.Manager()
-
-    class Meta:
-        abstract = True
-
-    def delete(self, *args, **kwargs):
-        self.is_deleted = True
-        self.deleted_at = timezone.now()
-        self.save()
-
-    def hard_delete(self, *args, **kwargs):
-        super().delete(*args, **kwargs)
-
-    def restore(self):
-        self.is_deleted = False
-        self.deleted_at = None
-        self.save()
+from core.models import Company, SoftDeleteModel
+from core.fields import EncryptedCharField
 
 class BankAccount(SoftDeleteModel):
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='bank_accounts')
     name = models.CharField(max_length=100)
     bank_name = models.CharField(max_length=100, blank=True, null=True)
-    agency = models.CharField(max_length=20, blank=True, null=True)
-    account_number = models.CharField(max_length=50, blank=True, null=True)
+    agency = EncryptedCharField(max_length=20, blank=True, null=True)
+    account_number = EncryptedCharField(max_length=50, blank=True, null=True)
     initial_balance = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     current_balance = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
+
+    @property
+    def masked_agency(self):
+        if not self.agency:
+            return ""
+        if len(str(self.agency)) <= 2:
+            return "**"
+        return "*" * (len(str(self.agency)) - 2) + str(self.agency)[-2:]
+
+    @property
+    def masked_account(self):
+        if not self.account_number:
+            return ""
+        if len(str(self.account_number)) <= 4:
+            return "****"
+        return "*" * (len(str(self.account_number)) - 4) + str(self.account_number)[-4:]
 
     def __str__(self):
         return f"{self.name} - {self.company.name}"
 
-class ProductPricing(models.Model):
+class ProductPricing(SoftDeleteModel):
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     product_name = models.CharField(max_length=255)
     base_cost = models.DecimalField(max_digits=12, decimal_places=2)
@@ -54,7 +43,7 @@ class ProductPricing(models.Model):
     def __str__(self):
         return self.product_name
 
-class TransactionCategory(models.Model):
+class TransactionCategory(SoftDeleteModel):
     TYPE_CHOICES = (
         ('INCOME', 'Income'),
         ('EXPENSE', 'Expense'),

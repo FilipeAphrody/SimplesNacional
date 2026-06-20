@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Reforma Tributária 2026 Simulator{% endblock %}
+
+{% block content %}
+<div class="dashboard-grid" style="grid-template-columns: 1fr;">
+    <div class="glass animate-fade-in" style="padding: 40px; max-width: 800px; margin: 0 auto; width: 100%;">
+        <h2 style="margin-bottom: 16px; text-align: center;">EC 132/2023 - Simples Nacional Dilemma</h2>
+        <p style="color: var(--text-muted); text-align: center; margin-bottom: 40px;">
+            In 2026, Simples Nacional businesses will have to choose between a Unified DAS (No credits for B2B clients) 
+            or a Segregated DAS (Collecting IBS/CBS outside the DAS to provide credits). 
+            Use this slider to see what the AI recommends based on your revenue profile.
+        </p>
+
+        <form method="POST" style="margin-bottom: 40px; text-align: center;">
+            {% csrf_token %}
+            <div style="margin-bottom: 32px;">
+                <label for="b2b_percentage" style="display: block; font-weight: 600; margin-bottom: 16px; font-size: 18px;">
+                    What percentage of your sales are B2B (Corporate Clients)?
+                </label>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 16px;">
+                    <span style="font-weight: bold; color: #38BDF8;">0%</span>
+                    <input type="range" id="b2b_percentage" name="b2b_percentage" min="0" max="100" value="{{ b2b_percentage|default:0 }}" style="width: 100%; max-width: 400px; accent-color: #38BDF8;" oninput="document.getElementById('b2b-output').innerText = this.value + '%'">
+                    <span style="font-weight: bold; color: #38BDF8;">100%</span>
+                </div>
+                <div style="margin-top: 16px; font-size: 24px; font-weight: 800; color: white;" id="b2b-output">{{ b2b_percentage|default:0 }}%</div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="font-size: 16px; padding: 12px 32px; background: #4F46E5;">Simulate AI Recommendation</button>
+        </form>
+
+        {% if recommendation %}
+        <div style="background: rgba(15,23,42,0.6); border: 1px solid var(--border); border-radius: 16px; padding: 32px; text-align: center;" class="animate-fade-in delay-2">
+            <h3 style="color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-size: 12px; margin-bottom: 8px;">AI Recommendation</h3>
+            <h2 class="{{ color }}" style="font-size: 32px; margin-bottom: 24px;">{{ recommendation }}</h2>
+            <p style="font-size: 16px; line-height: 1.6; color: var(--text-main);">
+                {{ reasoning }}
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

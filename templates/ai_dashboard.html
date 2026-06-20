@@ -44,6 +44,48 @@
     </div>
 </div>
 
+<!-- AI Action Center -->
+<div class="glass animate-fade-in delay-3" style="margin-top: 24px; padding: 24px; border-left: 4px solid #38BDF8;">
+    <h3 style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+        Prescriptive Action Center
+    </h3>
+    <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 24px;">Recommended 1-click actions based on your AI diagnosis.</p>
+    
+    <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+        {% if "mixing PF and PJ" in insight_text or "personal expenses" in insight_text|lower %}
+        <div style="background: var(--surface); padding: 16px; border-radius: 8px; flex: 1; min-width: 250px;">
+            <h4 style="color: var(--danger); margin-bottom: 8px;">Fix Account Mixing</h4>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Bulk reclassify flagged transactions as "Personal Draw" to lower your bankruptcy risk.</p>
+            <a href="{% url 'transactions' %}" class="btn" style="background: var(--danger); color: white; width: 100%; text-align: center; text-decoration: none;">Bulk Reclassify</a>
+        </div>
+        {% endif %}
+
+        {% if "Pró-labore" in insight_text or "Fator R" in insight_text or "Simples Nacional tax regime" in insight_text %}
+        <div style="background: var(--surface); padding: 16px; border-radius: 8px; flex: 1; min-width: 250px;">
+            <h4 style="color: var(--success); margin-bottom: 8px;">Optimize Taxes (Fator R)</h4>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Generate a new Pró-labore slip to automatically hit the 28% threshold this month.</p>
+            <a href="#" class="btn" style="background: var(--success); color: white; width: 100%; text-align: center; text-decoration: none;" onclick="alert('Mock: Generating Pró-labore Slip for eSocial...')">Generate Pró-labore Slip</a>
+        </div>
+        {% endif %}
+
+        {% if metrics.runway_months < 6 %}
+        <div style="background: var(--surface); padding: 16px; border-radius: 8px; flex: 1; min-width: 250px;">
+            <h4 style="color: var(--warning); margin-bottom: 8px;">Extend Runway</h4>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Run the cost-cutting simulator to see which fixed costs can be safely eliminated.</p>
+            <a href="#" class="btn" style="background: var(--warning); color: #0F172A; width: 100%; text-align: center; text-decoration: none;" onclick="alert('Mock: Opening Cost Cutting Simulator...')">View Simulator</a>
+        </div>
+        {% endif %}
+        
+        {% if "mixing PF and PJ" not in insight_text and "personal expenses" not in insight_text|lower and metrics.runway_months >= 6 %}
+        <div style="background: var(--surface); padding: 16px; border-radius: 8px; flex: 1; min-width: 250px;">
+            <h4 style="color: var(--text-main); margin-bottom: 8px;">No Critical Actions Needed</h4>
+            <p style="font-size: 13px; color: var(--text-muted);">Your financial health is stable. Keep up the good work!</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
 <div class="glass animate-fade-in delay-3" style="margin-top: 24px; padding: 24px;">
     <h3 style="margin-bottom: 16px;">Key Predictor Metrics</h3>
     <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 24px;">These metrics are extracted from your financial knowledge graph and used by the ML model to predict risk.</p>

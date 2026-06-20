@@ -28,7 +28,9 @@
 <div class="dashboard-grid" style="grid-template-columns: 2fr 1fr;">
     <div class="glass animate-fade-in delay-2" style="padding: 24px;">
         <h2 style="margin-bottom: 24px;">Revenue History (Last 6 Months)</h2>
-        <canvas id="revenueChart" style="width: 100%; height: 300px;"></canvas>
+        <div style="position: relative; height: 300px; width: 100%;">
+            <canvas id="revenueChart"></canvas>
+        </div>
     </div>
 
     <div class="glass animate-fade-in delay-3" style="padding: 32px;">
@@ -69,7 +71,7 @@
         data: {
             labels: {{ revenue_labels|safe }},
             datasets: [{
-                label: 'Gross Revenue (R$)',
+                label: 'Historical Revenue (R$)',
                 data: {{ revenue_data|safe }},
                 borderColor: '#4F46E5',
                 backgroundColor: gradient,
@@ -80,6 +82,20 @@
                 pointRadius: 5,
                 pointHoverRadius: 7,
                 fill: true,
+                tension: 0.4
+            },
+            {
+                label: 'Predictive Revenue (R$)',
+                data: {{ predictive_data|safe }},
+                borderColor: '#F59E0B',
+                borderWidth: 3,
+                borderDash: [5, 5],
+                pointBackgroundColor: '#F59E0B',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                fill: false,
                 tension: 0.4
             }]
         },
