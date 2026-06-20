@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Authentication{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-900 px-4">
+    <div class="max-w-md w-full bg-gray-800 rounded-lg shadow-xl p-8 border border-gray-700 text-gray-100">
+        <div class="text-center mb-8">
+            <h2 class="text-3xl font-bold text-white mb-2">Secure Login</h2>
+            <p class="text-gray-400">Two-Factor Authentication is required to access the admin portal.</p>
+        </div>
+        
+        <div class="space-y-6">
+            {% block content_wrapper %}
+                {% block main_content %}{% endblock %}
+            {% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}

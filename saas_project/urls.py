@@ -5,8 +5,8 @@ from django.conf import settings
 from two_factor.urls import urlpatterns as tf_urls
 
 # Enforce 2FA strictly on the Django Admin site
-from django_otp.admin import OTPAdminSite
-admin.site.__class__ = OTPAdminSite
+from two_factor.admin import AdminSiteOTPRequired
+admin.site.__class__ = AdminSiteOTPRequired
 
 urlpatterns = [
     # Core 2FA Routes
