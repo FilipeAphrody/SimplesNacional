@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from decimal import Decimal
-from ratelimit.decorators import ratelimit
+from django_ratelimit.decorators import ratelimit
 from .models import CompanyHealthMetrics
 from .services import update_company_health, optimize_fator_r, simulate_reforma_tributaria, analyze_sup_eligibility
 from accounting.services import calculate_rbt12
